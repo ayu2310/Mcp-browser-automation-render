@@ -1,0 +1,4 @@
+---
+alwaysApply: false
+---
+use gemini 2.5 when searching web, gpt 5 to plan, and claude and gpt to code

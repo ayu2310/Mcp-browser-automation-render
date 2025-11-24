@@ -1,0 +1,14 @@
+{
+  "cacheKey": "flow-1763992125572-ma0adof",
+  "startingUrl": "https://news.ycombinator.com/newest",
+  "browserbaseSessionId": "395a75cc-5344-4455-8279-d3594f4b7bbc",
+  "actions": [
+    {
+      "type": "action",
+      "data": {
+        "action": "Click the 'new' link at the top navigation"
+      },
+      "timestamp": 1763992525899
+    }
+  ]
+}
