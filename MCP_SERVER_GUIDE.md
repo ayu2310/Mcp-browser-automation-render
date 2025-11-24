@@ -151,8 +151,8 @@ Finds elements with deterministic selectors (XPath/CSS selectors).
 const result = await client.callTool({
   name: 'browserbase_stagehand_observe',
   arguments: {
-    instruction: 'Find the login button',
-    returnAction: true,
+  instruction: 'Find the login button',
+  returnAction: true,
     sessionId: sessionId
   }
 });
@@ -184,7 +184,7 @@ const sessionId = extractSessionId(sessionResult.content);
 await client.callTool({
   name: 'browserbase_stagehand_navigate',
   arguments: {
-    url: 'https://example.com',
+  url: 'https://example.com',
     sessionId: sessionId  // ← Required for session reuse
   }
 });
@@ -193,7 +193,7 @@ await client.callTool({
 await client.callTool({
   name: 'browserbase_stagehand_act',
   arguments: {
-    action: 'Click login button',
+  action: 'Click login button',
     sessionId: sessionId  // ← Required for session reuse
   }
 });
@@ -202,8 +202,8 @@ await client.callTool({
 const observeResult = await client.callTool({
   name: 'browserbase_stagehand_observe',
   arguments: {
-    instruction: 'Find the login button',
-    returnAction: true,
+  instruction: 'Find the login button',
+  returnAction: true,
     sessionId: sessionId
   }
 });
@@ -243,14 +243,14 @@ const sessionId = extractSessionId(sessionResult.content);
 await client.callTool({ 
   name: 'browserbase_stagehand_navigate', 
   arguments: { 
-    url: 'https://example.com',
+  url: 'https://example.com', 
     sessionId: sessionId  // ← Required!
   }
 });
 await client.callTool({ 
   name: 'browserbase_stagehand_act', 
   arguments: { 
-    action: 'Click button',
+  action: 'Click button',
     sessionId: sessionId  // ← Required!
   }
 });
