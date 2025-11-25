@@ -43,3 +43,7 @@ next-env.d.ts
 # Logs
 logs
 *.log
+
+# Screenshots and test artifacts
+screenshots/
+screenshots-*/
