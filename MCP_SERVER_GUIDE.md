@@ -2,7 +2,7 @@
 
 Production-ready Model Context Protocol (MCP) server for browser automation. **Fully stateless**—session management handled by Browserbase's SessionManager.
 
-**Production Endpoint:** `https://mcp-browser-automation-render.onrender.com/api/mcp`
+**Endpoint:** `https://browserbase-mcp-server-8kko3q5nh-ayus-projects-56bd70c3.vercel.app/api/mcp`
 
 ## Connecting to the MCP Server
 
@@ -13,7 +13,7 @@ const { Client } = require('@modelcontextprotocol/sdk/dist/cjs/client/index.js')
 const { StreamableHTTPClientTransport } = require('@modelcontextprotocol/sdk/dist/cjs/client/streamableHttp.js');
 
 // Connect to the MCP server
-const transport = new StreamableHTTPClientTransport('https://mcp-browser-automation-render.onrender.com/api/mcp');
+const transport = new StreamableHTTPClientTransport('https://browserbase-mcp-server-iub9cl6kc-ayus-projects-56bd70c3.vercel.app/api/mcp');
 const client = new Client({ name: 'my-client', version: '1.0.0' });
 
 // Handle connection errors
@@ -52,28 +52,22 @@ npm install @modelcontextprotocol/sdk
 ## Key Tools
 
 ### `browserbase_session_create`
-Creates a new Browserbase session **or reopens** an existing Browserbase session when you pass a known `sessionId`. Always capture the returned session ID and reuse it.
+Creates a new Browserbase session. Returns a session ID that you should use for all subsequent calls.
 
-**Parameters:**
-- `sessionId` (optional): Provide a previously issued Browserbase session ID to resume the same browser (handy for client-side replay). When omitted, a brand-new session is created.
+**Parameters:** None (optional config parameters)
 
-**Returns:** Session ID in the response (extract from `https://www.browserbase.com/sessions/{id}` text)
+**Returns:** Session ID in the response (extract from "sessions/{id}" URL in response text)
 
-**Examples:**
+**Example:**
 ```javascript
-// Create a new session
-const createResult = await client.callTool({
+const result = await client.callTool({
   name: 'browserbase_session_create',
   arguments: {}
 });
-const sessionId = extractSessionId(createResult.content);
 
-// Resume the exact same Browserbase session later
-const resumeResult = await client.callTool({
-  name: 'browserbase_session_create',
-  arguments: { sessionId }
-});
-const resumedId = extractSessionId(resumeResult.content); // matches sessionId
+// Extract sessionId from response
+const sessionId = extractSessionId(result.content);
+// sessionId will be used for all subsequent calls
 ```
 
 ### `browserbase_stagehand_navigate`
@@ -99,7 +93,7 @@ Performs actions on the page. Supports two modes:
 
 **Mode 1: Natural Language Action**
 - Parameters: `action` (required), `variables` (optional), `sessionId` (optional)
-- Uses Stagehand's LLM (Gemini 2.5 Flash) to interpret and execute the action
+- Uses Stagehand's LLM to interpret and execute the action
 
 **Mode 2: Deterministic Action (using observation)**
 - Parameters: `observation` (required), `sessionId` (optional)
@@ -157,8 +151,8 @@ Finds elements with deterministic selectors (XPath/CSS selectors).
 const result = await client.callTool({
   name: 'browserbase_stagehand_observe',
   arguments: {
-    instruction: 'Find the login button',
-    returnAction: true,
+  instruction: 'Find the login button',
+  returnAction: true,
     sessionId: sessionId
   }
 });
@@ -174,15 +168,15 @@ const observations = extractObservations(result.content);
 - `browserbase_stagehand_extract`: Extract structured data
 - `browserbase_session_close`: Close session
 
-**All tools accept optional `sessionId` parameter for session reuse (`session_create` additionally accepts it to reopen an existing Browserbase session).**
+**All tools accept optional `sessionId` parameter for session reuse.**
 
 ## Usage Pattern
 
 ```javascript
-// 1. Create or resume
+// 1. Create session
 const sessionResult = await client.callTool({
   name: 'browserbase_session_create',
-  arguments: {} // or { sessionId } to reopen a prior browser
+  arguments: {}
 });
 const sessionId = extractSessionId(sessionResult.content);
 
@@ -190,8 +184,8 @@ const sessionId = extractSessionId(sessionResult.content);
 await client.callTool({
   name: 'browserbase_stagehand_navigate',
   arguments: {
-    url: 'https://example.com',
-    sessionId
+  url: 'https://example.com',
+    sessionId: sessionId  // ← Required for session reuse
   }
 });
 
@@ -199,27 +193,27 @@ await client.callTool({
 await client.callTool({
   name: 'browserbase_stagehand_act',
   arguments: {
-    action: 'Click login button',
-    sessionId
+  action: 'Click login button',
+    sessionId: sessionId  // ← Required for session reuse
   }
 });
 
-// 3b. Deterministic action
+// 3b. Act (Deterministic - using observation from browserbase_stagehand_observe)
 const observeResult = await client.callTool({
   name: 'browserbase_stagehand_observe',
   arguments: {
-    instruction: 'Find the login button',
-    returnAction: true,
-    sessionId
+  instruction: 'Find the login button',
+  returnAction: true,
+    sessionId: sessionId
   }
 });
 const observations = extractObservations(observeResult.content);
-if (observations?.length) {
+if (observations && observations.length > 0) {
   await client.callTool({
     name: 'browserbase_stagehand_act',
     arguments: {
-      observation: observations[0],
-      sessionId
+      observation: observations[0],  // Pass full observation object
+      sessionId: sessionId  // ← Required for session reuse
     }
   });
 }
@@ -227,7 +221,9 @@ if (observations?.length) {
 // 4. Close session when done
 await client.callTool({
   name: 'browserbase_session_close',
-  arguments: { sessionId }
+  arguments: {
+    sessionId: sessionId
+  }
 });
 ```
 
@@ -247,14 +243,14 @@ const sessionId = extractSessionId(sessionResult.content);
 await client.callTool({ 
   name: 'browserbase_stagehand_navigate', 
   arguments: { 
-    url: 'https://example.com', 
+  url: 'https://example.com', 
     sessionId: sessionId  // ← Required!
   }
 });
 await client.callTool({ 
   name: 'browserbase_stagehand_act', 
   arguments: { 
-    action: 'Click button',
+  action: 'Click button',
     sessionId: sessionId  // ← Required!
   }
 });
@@ -264,14 +260,44 @@ await client.callTool({
 
 ## Helper Functions
 
-Use the shared helpers in `scripts/helpers.js` inside this repo to keep parsing logic consistent (handles escaped JSON, screenshot payloads, etc.):
+### Extract Session ID from Response
 
 ```javascript
-const {
-  extractSessionId,
-  extractObservations,
-  extractJsonData,
-} = require('./scripts/helpers');
+function extractSessionId(content) {
+  for (const item of content) {
+    if (item.type === 'text' && item.text) {
+      const match = item.text.match(/sessions\/([a-f0-9-]+)/i);
+      if (match) {
+        return match[1];
+      }
+    }
+  }
+  return null;
+}
+```
+
+### Extract Observations from Response
+
+```javascript
+function extractObservations(content) {
+  for (const item of content) {
+    if (item.type === 'text' && item.text) {
+      // Look for JSON array in response
+      const arrayMatch = item.text.match(/\[[\s\S]*\]/);
+      if (arrayMatch) {
+        try {
+          const observations = JSON.parse(arrayMatch[0]);
+          if (Array.isArray(observations)) {
+            return observations;
+          }
+        } catch (e) {
+          // Continue
+        }
+      }
+    }
+  }
+  return [];
+}
 ```
 
 ## Best Practices
@@ -305,16 +331,10 @@ When using `browserbase_stagehand_observe` with `returnAction: true`, you get ob
 
 Pass the entire observation object to `browserbase_stagehand_act` for deterministic execution.
 
-## Model Configuration
-
-The server uses **Gemini 2.5 Flash** by default for all Stagehand actions. This can be overridden by setting the `MODEL_NAME` environment variable in Render.
-
-Default model: `google/gemini-2.5-flash`
-
 ## Status
 
-✅ **Production Ready**: Deployed and tested on Render  
-✅ **Session Management**: Automatic via Browserbase SessionManager  
-✅ **Deterministic Actions**: Support for XPath/selector-based actions via observations  
-✅ **Natural Language Actions**: Support for prompt-based actions with Gemini 2.5 Flash  
+✅ **Production Ready**: Deployed and tested
+✅ **Session Management**: Automatic via Browserbase SessionManager
+✅ **Deterministic Actions**: Support for XPath/selector-based actions via observations
+✅ **Natural Language Actions**: Support for prompt-based actions
 ✅ **Stateless**: No server-side state - all session management client-side

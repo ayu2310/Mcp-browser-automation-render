@@ -4,9 +4,9 @@ Production-ready Model Context Protocol (MCP) server for browser automation. **F
 
 ## Status
 
-✅ **Production Ready** - Deployed on Render
+✅ **Production Ready** - Deployed on Vercel
 
-**Endpoint:** `https://mcp-browser-automation-render.onrender.com/api/mcp`
+**Endpoint:** `https://browserbase-mcp-server-iub9cl6kc-ayus-projects-56bd70c3.vercel.app/api/mcp`
 
 ## Quick Start
 
@@ -17,12 +17,10 @@ npm run dev
 
 ## Environment Variables
 
-Required environment variables (set in Render dashboard):
-
 - `BROWSERBASE_API_KEY` - Browserbase API key
 - `BROWSERBASE_PROJECT_ID` - Browserbase Project ID
-- `GEMINI_API_KEY` - Gemini API key for Stagehand (defaults to `google/gemini-2.5-flash`)
-- `MODEL_NAME` (optional) - Override Stagehand model name
+- `GEMINI_API_KEY` / `GOOGLE_API_KEY` / `MODEL_API_KEY` - LLM key for Stagehand
+- `MODEL_NAME` (optional) - Override Stagehand model
 
 ## Core Concept
 
@@ -39,7 +37,7 @@ Required environment variables (set in Render dashboard):
 const { Client } = require('@modelcontextprotocol/sdk/dist/cjs/client/index.js');
 const { StreamableHTTPClientTransport } = require('@modelcontextprotocol/sdk/dist/cjs/client/streamableHttp.js');
 
-const transport = new StreamableHTTPClientTransport('https://mcp-browser-automation-render.onrender.com/api/mcp');
+const transport = new StreamableHTTPClientTransport('https://browserbase-mcp-server-iub9cl6kc-ayus-projects-56bd70c3.vercel.app/api/mcp');
 const client = new Client({ name: 'my-client', version: '1.0.0' });
 await client.connect(transport);
 
@@ -79,24 +77,32 @@ if (observations.length > 0) {
 ## Documentation
 
 - **[MCP_SERVER_GUIDE.md](./MCP_SERVER_GUIDE.md)** - Complete user guide with all tools and examples
-- **[SCROLL_ACTION_ISSUE.md](./SCROLL_ACTION_ISSUE.md)** - Known limitations and workarounds for scroll actions
+- **[CONTEXT.md](./CONTEXT.md)** - Project context and architecture details
 
 ## Features
 
 ✅ Stateless - No server storage  
 ✅ Session Management - Automatic via Browserbase SessionManager  
 ✅ Deterministic Actions - Support for XPath/selector-based actions via observations  
-✅ Natural Language Actions - Support for prompt-based actions with Gemini 2.5 Flash  
-✅ Production Tested - Deployed and verified on Render
+✅ Natural Language Actions - Support for prompt-based actions  
+✅ Production Tested - Deployed and verified
+
+## Testing
+
+```bash
+# Test against production
+npm test
+
+# Test against local server
+npm run test:local
+```
 
 ## Deployment
 
-Deployed on Render with automatic deployments from main branch.
+Deployed on Vercel with automatic deployments from main branch.
 
 **Configuration:**
 - Framework: Next.js 14
-- Runtime: Node.js (persistent process)
+- Runtime: Serverless functions
 - Max Duration: 60 seconds
-- Health Check: `/api/health`
-
-See `render.yaml` for deployment configuration.
+- Region: iad1

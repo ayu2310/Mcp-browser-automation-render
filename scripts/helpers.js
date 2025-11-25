@@ -104,6 +104,3 @@ module.exports = {
   extractJsonData
 };
 
-
-
-
