@@ -102,7 +102,7 @@ const handler = createMcpHandler(
     const browserbaseApiKey = process.env.BROWSERBASE_API_KEY;
     const browserbaseProjectId = process.env.BROWSERBASE_PROJECT_ID;
     const modelApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.MODEL_API_KEY;
-    const modelName = process.env.MODEL_NAME;
+    const modelName = process.env.MODEL_NAME || 'google/gemini-2.5-flash';
 
     if (!browserbaseApiKey || !browserbaseProjectId) {
       throw new Error('BROWSERBASE_API_KEY and BROWSERBASE_PROJECT_ID are required');
@@ -216,107 +216,23 @@ const handler = createMcpHandler(
               };
             }
             
-            // For actions/observe, ensure page is ready before executing
+            // For actions/observe, verify page is ready (not blank)
             if ((toolName === 'browserbase_stagehand_act' || toolName === 'browserbase_stagehand_observe') && params.sessionId) {
               try {
                 const stagehand = await browserbaseContext.getStagehand(params.sessionId);
                 const page = stagehand.page;
                 const currentUrl = page.url();
-                
-                // If page is blank, wait a bit and check again
+                // If page is on about:blank or data: URL, it's likely blank
                 if (currentUrl === 'about:blank' || currentUrl.startsWith('data:')) {
-                  console.warn(`[MCP] ${toolName}: Page appears blank (${currentUrl}), waiting for page to load...`);
-                  // Wait for page to load (up to 5 seconds)
-                  await Promise.race([
-                    page.waitForLoadState('domcontentloaded', { timeout: 5000 }).catch(() => {}),
-                    new Promise(resolve => setTimeout(resolve, 2000))
-                  ]);
-                  
-                  // Check URL again
-                  const newUrl = page.url();
-                  if (newUrl === 'about:blank' || newUrl.startsWith('data:')) {
-                    console.warn(`[MCP] ${toolName}: Page still blank after wait, action may fail`);
-                  } else {
-                    console.log(`[MCP] ${toolName}: Page loaded to ${newUrl}`);
-                  }
-                } else {
-                  // Page has a valid URL, wait for it to be ready
-                  try {
-                    await page.waitForLoadState('domcontentloaded', { timeout: 3000 }).catch(() => {});
-                    // Additional wait for dynamic content and LLM processing
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                  } catch (e) {
-                    // Ignore timeout - page might already be loaded
-                  }
+                  console.warn(`[MCP] ${toolName}: Page appears blank (${currentUrl}), action may fail`);
                 }
               } catch (e) {
                 // Ignore - page check is best effort
-                console.warn(`[MCP] ${toolName}: Could not verify page state:`, e instanceof Error ? e.message : String(e));
               }
             }
             
-            // For LLM-based tools (act, observe), add retry logic for parsing errors
-            let result;
-            const maxRetries = 2;
-            let lastError = null;
-            
-            for (let attempt = 0; attempt <= maxRetries; attempt++) {
-              try {
-                // For all other tools, pass through to original Browserbase MCP tool
-                result = await browserbaseContext.run(tool, params);
-                lastError = null;
-                break; // Success, exit retry loop
-              } catch (error: any) {
-                const errorMessage = error instanceof Error ? error.message : String(error);
-                lastError = error;
-                
-                // Only retry on parsing errors for LLM-based tools
-                if (
-                  attempt < maxRetries &&
-                  (toolName === 'browserbase_stagehand_act' || toolName === 'browserbase_stagehand_observe') &&
-                  (errorMessage.includes('parse') || errorMessage.includes('Failed to parse'))
-                ) {
-                  const waitTime = Math.pow(2, attempt) * 1000; // Exponential backoff: 1s, 2s
-                  console.warn(`[MCP] ${toolName}: Parsing error on attempt ${attempt + 1}, retrying in ${waitTime}ms...`);
-                  await new Promise(resolve => setTimeout(resolve, waitTime));
-                  
-                  // Wait a bit more for page to settle
-                  if (params.sessionId) {
-                    try {
-                      const stagehand = await browserbaseContext.getStagehand(params.sessionId);
-                      await new Promise(resolve => setTimeout(resolve, 1000));
-                    } catch (e) {
-                      // Ignore
-                    }
-                  }
-                } else {
-                  // Not a retryable error or max retries reached
-                  throw error;
-                }
-              }
-            }
-            
-            // If we still have an error after retries, throw it
-            if (lastError) {
-              throw lastError;
-            }
-            
-            // Check if result indicates an error
-            if (result.isError) {
-              console.error(`[MCP] ${toolName}: Tool returned error`);
-              // If it's a parsing error, provide more helpful message
-              const errorText = result.content?.find((item: any) => item.type === 'text')?.text || '';
-              if (errorText.includes('parse') || errorText.includes('Failed to parse')) {
-                return {
-                  content: [
-                    {
-                      type: 'text',
-                      text: `Error: ${errorText}. This may be due to: 1) Page not fully loaded - try navigating first, 2) LLM response parsing issue - try a simpler action, or 3) Gemini API rate limits if using free tier.`,
-                    },
-                  ],
-                };
-              }
-            }
+            // For all other tools, pass through to original Browserbase MCP tool
+            const result = await browserbaseContext.run(tool, params);
             
             return {
               content: processImageContent(result.content || [], toolName),
@@ -325,19 +241,11 @@ const handler = createMcpHandler(
             const errorMessage = error instanceof Error ? error.message : String(error);
             console.error(`[MCP] Error in ${toolName}:`, errorMessage);
             
-            // Provide more helpful error messages
-            let helpfulMessage = errorMessage;
-            if (errorMessage.includes('parse') || errorMessage.includes('Failed to parse')) {
-              helpfulMessage = `${errorMessage}. Possible causes: Page not ready (try navigating first), LLM parsing issue (try simpler action), or API rate limits.`;
-            } else if (errorMessage.includes('rate limit') || errorMessage.includes('429') || errorMessage.includes('quota')) {
-              helpfulMessage = `${errorMessage}. This appears to be a rate limit issue. If using Gemini free tier, try: 1) Wait between requests, 2) Upgrade API tier, or 3) Use a different model.`;
-            }
-            
             return {
               content: [
                 {
                   type: 'text',
-                  text: `Error: ${helpfulMessage}`,
+                  text: `Error: ${errorMessage}`,
                 },
               ],
             };

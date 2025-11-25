@@ -79,7 +79,7 @@ const handler = createMcpHandler(
     const browserbaseApiKey = process.env.BROWSERBASE_API_KEY;
     const browserbaseProjectId = process.env.BROWSERBASE_PROJECT_ID;
     const modelApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.MODEL_API_KEY;
-    const modelName = process.env.MODEL_NAME;
+    const modelName = process.env.MODEL_NAME || 'google/gemini-2.5-flash';
 
     if (!browserbaseApiKey || !browserbaseProjectId) {
       throw new Error('BROWSERBASE_API_KEY and BROWSERBASE_PROJECT_ID are required');
