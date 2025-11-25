@@ -43,3 +43,10 @@ next-env.d.ts
 # Logs
 logs
 *.log
+
+# Screenshots & artifacts
+screenshots/
+screenshots-*/
+
+# Local test harness scripts
+scripts/test-*.js

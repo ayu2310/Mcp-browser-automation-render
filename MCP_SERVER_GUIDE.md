@@ -2,7 +2,7 @@
 
 Production-ready Model Context Protocol (MCP) server for browser automation. **Fully stateless**—session management handled by Browserbase's SessionManager.
 
-**Endpoint:** `https://browserbase-mcp-server-8kko3q5nh-ayus-projects-56bd70c3.vercel.app/api/mcp`
+**Endpoint:** `https://mcp-browser-automation-render.onrender.com/api/mcp`
 
 ## Connecting to the MCP Server
 
@@ -13,7 +13,7 @@ const { Client } = require('@modelcontextprotocol/sdk/dist/cjs/client/index.js')
 const { StreamableHTTPClientTransport } = require('@modelcontextprotocol/sdk/dist/cjs/client/streamableHttp.js');
 
 // Connect to the MCP server
-const transport = new StreamableHTTPClientTransport('https://browserbase-mcp-server-iub9cl6kc-ayus-projects-56bd70c3.vercel.app/api/mcp');
+const transport = new StreamableHTTPClientTransport('https://mcp-browser-automation-render.onrender.com/api/mcp');
 const client = new Client({ name: 'my-client', version: '1.0.0' });
 
 // Handle connection errors
@@ -333,8 +333,16 @@ Pass the entire observation object to `browserbase_stagehand_act` for determinis
 
 ## Status
 
-✅ **Production Ready**: Deployed and tested
+✅ **Production Ready**: Deployed and tested on Render
 ✅ **Session Management**: Automatic via Browserbase SessionManager
 ✅ **Deterministic Actions**: Support for XPath/selector-based actions via observations
-✅ **Natural Language Actions**: Support for prompt-based actions
+✅ **Natural Language Actions**: Support for prompt-based actions with Gemini 2.5 Flash
 ✅ **Stateless**: No server-side state - all session management client-side
+
+## Deployment (Render)
+
+- Service defined in `render.yaml`
+- Build command: `npm install && npm run build`
+- Start command: `npm start`
+- Health check path: `/api/health`
+- Required env vars: `BROWSERBASE_API_KEY`, `BROWSERBASE_PROJECT_ID`, `GEMINI_API_KEY` (optional `MODEL_NAME` overrides default `google/gemini-2.5-flash`)

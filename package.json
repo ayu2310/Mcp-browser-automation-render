@@ -12,7 +12,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "Browserbase MCP Server deployed on Vercel",
+  "description": "Browserbase MCP Server deployed on Render",
   "dependencies": {
     "@browserbasehq/mcp-server-browserbase": "latest",
     "@browserbasehq/stagehand": "^3.0.0",

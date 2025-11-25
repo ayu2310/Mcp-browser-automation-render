@@ -4,9 +4,9 @@ Production-ready Model Context Protocol (MCP) server for browser automation. **F
 
 ## Status
 
-✅ **Production Ready** - Deployed on Vercel
+✅ **Production Ready** - Deployed on Render
 
-**Endpoint:** `https://browserbase-mcp-server-iub9cl6kc-ayus-projects-56bd70c3.vercel.app/api/mcp`
+**Endpoint:** `https://mcp-browser-automation-render.onrender.com/api/mcp`
 
 ## Quick Start
 
@@ -37,7 +37,7 @@ npm run dev
 const { Client } = require('@modelcontextprotocol/sdk/dist/cjs/client/index.js');
 const { StreamableHTTPClientTransport } = require('@modelcontextprotocol/sdk/dist/cjs/client/streamableHttp.js');
 
-const transport = new StreamableHTTPClientTransport('https://browserbase-mcp-server-iub9cl6kc-ayus-projects-56bd70c3.vercel.app/api/mcp');
+const transport = new StreamableHTTPClientTransport('https://mcp-browser-automation-render.onrender.com/api/mcp');
 const client = new Client({ name: 'my-client', version: '1.0.0' });
 await client.connect(transport);
 
@@ -77,7 +77,7 @@ if (observations.length > 0) {
 ## Documentation
 
 - **[MCP_SERVER_GUIDE.md](./MCP_SERVER_GUIDE.md)** - Complete user guide with all tools and examples
-- **[CONTEXT.md](./CONTEXT.md)** - Project context and architecture details
+Refer to `MCP_SERVER_GUIDE.md` for full details on each MCP tool and usage patterns.
 
 ## Features
 
@@ -87,22 +87,6 @@ if (observations.length > 0) {
 ✅ Natural Language Actions - Support for prompt-based actions  
 ✅ Production Tested - Deployed and verified
 
-## Testing
-
-```bash
-# Test against production
-npm test
-
-# Test against local server
-npm run test:local
-```
-
 ## Deployment
 
-Deployed on Vercel with automatic deployments from main branch.
-
-**Configuration:**
-- Framework: Next.js 14
-- Runtime: Serverless functions
-- Max Duration: 60 seconds
-- Region: iad1
+Deployed on Render using `render.yaml`. The service installs dependencies, runs `npm run build`, and starts with `npm start`. Health checks resolve against `/api/health`.
